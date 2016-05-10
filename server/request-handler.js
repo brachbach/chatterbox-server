@@ -15,7 +15,8 @@ var http = require('http');
 var querystring = require('querystring');
 var util = require('util');
 
-var messages = [];
+var messages = [{ 'username': 'chatterbot', 'text': 'beep beep bop', 'roomname': 'lobby', 'objectId': 0 }];
+var messageCount = 1;
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -55,10 +56,17 @@ var requestHandler = function(request, response) {
       });
 
       request.on('end', function() {
-        messages.push(JSON.parse(body));
+        var message = JSON.parse(body);
+        message.objectId = messageCount;
+        messageCount++;
+
+        messages.push(message);
+        console.log('body: ', body);
       });
 
 
+    } else if ( request.method === 'OPTIONS' ) {
+      statusCode = 200;
     } else { //method not allowed, 405
       statusCode = 405;
     }

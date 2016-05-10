@@ -14,7 +14,6 @@ describe('Node Server Request Listener Function', function() {
   it('Should answer GET requests for /classes/messages with a 200 status code', function() {
     // This is a fake server request. Normally, the server would provide this,
     // but we want to test our function's behavior totally independent of the server code
-    console.log('HW');
     var req = new stubs.request('/classes/messages', 'GET');
     var res = new stubs.response();
 
@@ -115,8 +114,7 @@ describe('Node Server Request Listener Function', function() {
     waitForThen(
       function() { return res._ended; },
       function() {
-        console.log('statusCode', res._responseCode);
-        console.log('HW');
+        //BROKEN
         expect(res._responseCode).to.equal(404);
       });
   });
