@@ -12,6 +12,10 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 var http = require('http');
+var querystring = require('querystring');
+var util = require('util');
+
+var messages = [];
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -28,19 +32,33 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   var statusCode;
   var url = request.url;
 
-  console.log('url: ', url);
+  // console.log('url: ', url);
   if ( url === '/' ) {
 
   } else if ( url === '/classes/messages' ) {
     if ( request.method === 'GET' ) {
       statusCode = 200;
+
     } else if ( request.method === 'POST' ) {
       statusCode = 201;
+
+      var body = '';
+
+      request.on('data', function(chunk) {
+        body += chunk.toString();
+      });
+
+      request.on('end', function() {
+        messages.push(JSON.parse(body));
+      });
+
+
     } else { //method not allowed, 405
       statusCode = 405;
     }
@@ -82,7 +100,7 @@ var requestHandler = function(request, response) {
   // node to actually send all the data over to the client.
 
   
-  response.end('{"results": []}');
+  response.end('{"results":' + JSON.stringify(messages) + '}');
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
