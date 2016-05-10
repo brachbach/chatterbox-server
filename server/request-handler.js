@@ -17,7 +17,7 @@ var util = require('util');
 var fs = require('fs');
 var path = require('path');
 
-var messages = [{ 'username': 'chatterbot', 'text': 'beep beep bop', 'roomname': 'lobby', 'objectId': 0 }];
+var messages;
 var messageCount = 1;
 var initialized = false;
 
@@ -38,6 +38,9 @@ var requestHandler = function(request, response) {
   //serves the html file to client upon initial request/connection
   if ( request.url === '/' ) {
 
+    messages = JSON.parse(fs.readFileSync('log.json', {encoding: 'utf8'}));
+    console.log('messages', messages);
+    console.log('type', typeof messages);
     var indexHtml = fs.readFileSync('../client/index.html', {encoding: 'utf8'});
     response.writeHeader(200);
     response.write(indexHtml);
@@ -66,6 +69,8 @@ var requestHandler = function(request, response) {
         messageCount++;
 
         messages.push(message);
+        var messageCopy = messages.slice();
+        fs.writeFile('log.json', JSON.stringify(messageCopy));
 
       });
     
