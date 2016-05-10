@@ -4,6 +4,8 @@ var expect = require('chai').expect;
 describe('server', function() {
   it('should respond to GET requests for /log with a 200 status code', function(done) {
     request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+      console.log('body: ', body);
+      console.log('statusCode', response.statusCode);
       expect(response.statusCode).to.equal(200);
       done();
     });
@@ -68,6 +70,8 @@ describe('server', function() {
 
   it('Should 404 when asked for a nonexistent endpoint', function(done) {
     request('http://127.0.0.1:3000/arglebargle', function(error, response, body) {
+      console.log('body: ', body);
+      console.log('statusCode', response.statusCode);
       expect(response.statusCode).to.equal(404);
       done();
     });
