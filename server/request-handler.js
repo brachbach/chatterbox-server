@@ -14,6 +14,7 @@ this file and include it in basic-server.js so that it actually works.
 var http = require('http');
 var querystring = require('querystring');
 var util = require('util');
+var fs = require('fs');
 
 var messages = [{ 'username': 'chatterbot', 'text': 'beep beep bop', 'roomname': 'lobby', 'objectId': 0 }];
 var messageCount = 1;
@@ -35,6 +36,15 @@ var requestHandler = function(request, response) {
   // console.logs in your code.
 
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
+
+  fs.readFile('../../client/index.html', function (err, html) {
+    if (err) {
+      throw err; 
+    }    
+    response.writeHeader(200, {'Content-Type': 'text/html'});  
+    response.write(html); 
+    response.end(); 
+  });
 
   var statusCode;
   var url = request.url;
