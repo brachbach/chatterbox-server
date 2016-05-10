@@ -15,9 +15,18 @@ var http = require('http');
 var querystring = require('querystring');
 var util = require('util');
 var fs = require('fs');
+var path = require('path');
 
 var messages = [{ 'username': 'chatterbot', 'text': 'beep beep bop', 'roomname': 'lobby', 'objectId': 0 }];
 var messageCount = 1;
+var initialized = false;
+
+var defaultCorsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, accept',
+  'access-control-max-age': 10 // Seconds.
+};
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -37,25 +46,22 @@ var requestHandler = function(request, response) {
 
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
-  fs.readFile('../../client/index.html', function (err, html) {
-    if (err) {
-      throw err; 
-    }    
-    response.writeHeader(200, {'Content-Type': 'text/html'});  
-    response.write(html); 
-    response.end(); 
-  });
+  // debugger;
+
 
   var statusCode;
   var url = request.url;
 
   // console.log('url: ', url);
-  if ( url === '/' ) {
-
+  if ( request.url === '/' ) {
+    initialized = true;
+    var indexHtml = fs.readFileSync('../client/index.html', {encoding: 'utf8'});
+    response.writeHeader(200);
+    response.write(indexHtml);
+    response.end();
   } else if ( url === '/classes/messages' ) {
     if ( request.method === 'GET' ) {
       statusCode = 200;
-
     } else if ( request.method === 'POST' ) {
       statusCode = 201;
 
@@ -73,68 +79,57 @@ var requestHandler = function(request, response) {
         messages.push(message);
         console.log('body: ', body);
       });
-
-
     } else if ( request.method === 'OPTIONS' ) {
       statusCode = 200;
     } else { //method not allowed, 405
       statusCode = 405;
     }
-  } else { //default: 404
-    statusCode = 404;
+
+    var headers = defaultCorsHeaders;
+
+    // You will need to change this if you are sending something
+    // other than plain text, like JSON or HTML.
+    headers['Content-Type'] = 'application/json';
+
+    response.writeHead(statusCode, headers);
+
+
+    // http.get('/log', response => {
+    //   console.log('succesful GET request');
+    // }).on('error', e => console.log('Got error: ', e.message));
+
+    // Make sure to always call response.end() - Node may not send
+    // anything back to the client until you do. The string you pass to
+    // response.end() will be the body of the response - i.e. what shows
+    // up in the browser.
+    //
+    // Calling .end "flushes" the response's internal buffer, forcing
+    // node to actually send all the data over to the client.
+    response.end('{"results":' + JSON.stringify(messages) + '}');
+  } else {
+    statusCode = 200;
+    // var filetype = path.extname(request.url);
+    console.log('url: ', request.url);
+    var file = fs.readFileSync('../client' + request.url, {encoding: 'utf8'});
+    if (file === undefined) {
+      response.writeHeader(404);
+      response.end();
+    } else {
+      var filetype = path.extname(request.url);
+      if ( filetype === '.js' ) {
+        response.writeHeader(200, {'Content-Type': 'text/javascript'});
+      } else { response.writeHeader(200); }
+      
+      response.write(file);
+      response.end();
+    }
   }
-
-
-
-  // The outgoing status.
-
-  // See the note below about CORS headers.
-  
-
-
-  var headers = defaultCorsHeaders;
-
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'application/json';
-
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
-
-
-  // http.get('/log', response => {
-  //   console.log('succesful GET request');
-  // }).on('error', e => console.log('Got error: ', e.message));
-
-  // Make sure to always call response.end() - Node may not send
-  // anything back to the client until you do. The string you pass to
-  // response.end() will be the body of the response - i.e. what shows
-  // up in the browser.
-  //
-  // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client.
-
-  
-  response.end('{"results":' + JSON.stringify(messages) + '}');
-};
-
 // These headers will allow Cross-Origin Resource Sharing (CORS).
 // This code allows this server to talk to websites that
 // are on different domains, for instance, your chat client.
-//
-// Your chat client is running from a url like file://your/chat/client/index.html,
-// which is considered a different domain.
-//
+
 // Another way to get around this restriction is to serve you chat
-// client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept',
-  'access-control-max-age': 10 // Seconds.
+// client from this domain by setting up static file serving.   
 };
 
 exports.requestHandler = requestHandler;
