@@ -1,24 +1,21 @@
-var http = require('http');
-var handleRequest = require('./request-handler.js');
 var express = require('express');
-var fs = require('fs');
-
-var app = express();
-var port = 3000;
-var ip = '127.0.0.1';
-app.listen(port, ip);
 
 var messages;
 var messageCount = 1;
-
-messages = JSON.parse(fs.readFileSync('log.json', {encoding: 'utf8'}));
+var url = request.url;
 
 app.use(express.static('../client'));
 
+app.get('/', function(request, response) {
+  messages = JSON.parse(fs.readFileSync('log.json', {encoding: 'utf8'}));
+  var indexHtml = fs.readFileSync('../client/index.html', {encoding: 'utf8'});
+  response.status(200).send(indexHtml);
+});
+
 app.route('/classes/messages')
   .get(function(request, response) {
-    console.log(request.url);
-    response.status(200).send({'results': messages });
+    response.writeHead(statusCode);
+    response.status(200).send('{"results":' + JSON.stringify(messages) + '}');
   })
   .post(function(request, response) {
     var body = '';
@@ -43,5 +40,3 @@ app.route('/classes/messages')
   .options(function(request, response) {
     response.status(200).end();
   });
-
-console.log('Express server listening on port ' + port);
